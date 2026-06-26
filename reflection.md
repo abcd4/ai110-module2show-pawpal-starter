@@ -3,9 +3,15 @@
 ## 1. System Design
 
 **a. Initial design**
-
 - Briefly describe your initial UML design.
+A user should be able to add/remove a pet, add/remove a task for a pet, and see the day's tasks.
 - What classes did you include, and what responsibilities did you assign to each?
+The classes needed will be an owner class, a pet class, a task class, and a scheduler class.
+  - An owner will include a name, ,pet list. It will have no methods.
+  - A pet will include: name, breed, age, medications. It will have no methods.
+  - A task will include: category (type of task e.g feeding, hospital, grooming), pet (the pet which the task is done for), and priority level. It will have no methods.
+  - A scheduler will include: a task list. It will have be able to add/remove a pet, add/remove a task (sorting and priortization logic will be handled here)
+
 
 **b. Design changes**
 
