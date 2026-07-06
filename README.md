@@ -92,14 +92,40 @@ test_pawpal_system.py::test_adding_task_increases_pet_task_count PASSED  [100%]
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
+Beyond the basic priority-packing plan, PawPal+ adds four "smarter scheduling"
+behaviors. Each is a small, independently testable method on `Scheduler` (or
+`Task`) so you can pick the behavior you need at call time.
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | `Scheduler.sort_by_time()` | Returns every pet's tasks in chronological order by their `"HH:MM"` `time` attribute; untimed tasks sort last. |
+| Filtering | `Scheduler.filter_tasks(pet_name=None, done=None)` | Narrows tasks by pet name (case-insensitive) and/or completion status; no args returns all tasks. |
+| Conflict handling | `Scheduler.detect_conflicts()` | Compares every pair of pending, timed tasks and returns warning strings for any whose `[start, start+duration)` intervals overlap — warns, never crashes. |
+| Recurring tasks | `Task.mark_complete()` → `Task._spawn_next_occurrence()` | Completing a `"daily"`/`"weekly"` task auto-creates the next occurrence (via `timedelta`) on the same pet and returns it. |
+
+### Sorting behavior — `Scheduler.sort_by_time()`
+Sorts tasks by their zero-padded `"HH:MM"` `time` string using
+`key=lambda t: (t.time is None, t.time or "")`, so timed tasks come first in
+clock order and untimed tasks fall to the end. This is separate from
+`get_daily_tasks()`, which orders by priority to pack the day.
+
+### Filtering behavior — `Scheduler.filter_tasks(...)`
+One method covers both "show me just this pet's tasks" (`pet_name="Rex"`) and
+"show me only pending / only completed tasks" (`done=False` / `done=True`).
+Arguments left as `None` are not filtered on, so combinations work naturally.
+
+### Conflict detection logic — `Scheduler.detect_conflicts()`
+Uses an all-pairs check (`itertools.combinations`) over pending, timed tasks.
+Two tasks conflict when each starts strictly before the other ends, so it
+catches partial overlaps (a 40-min walk at 17:30 clashes with an 18:00 task),
+not just identical start times. Returns a list of human-readable warning
+strings (empty when the day is clear) rather than raising.
+
+### Recurring task logic — `Task.mark_complete()`
+Marking a recurring task complete flips `done = True` and then spawns the next
+occurrence: a fresh `Task` with the same fields but `due_date` advanced by
+`timedelta(days=1)` (daily) or `timedelta(weeks=1)` (weekly), attached to the
+same pet. One-time tasks (`frequency=None`) just complete and return `None`.
 
 ## 📸 Demo Walkthrough
 

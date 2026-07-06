@@ -32,6 +32,26 @@ I made several significant changes during implementation. By adding an id field 
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
 
+My scheduler detects conflicts but does not resolve them. detect_conflicts()
+compares every pair of pending, timed tasks and checks whether their
+`[start, start + duration)` intervals overlap, then returns a list of warning
+strings. It deliberately does nothing more — it never reorders, shortens, or
+drops a task to make the clash go away; it just warns the owner and lets them
+decide. I chose interval-overlap detection (not just exact "HH:MM" matches) so a
+40-minute walk starting at 17:30 correctly flags against an 18:00 task, but I
+stopped short of auto-resolution.
+
+This is reasonable for a pet owner: which task yields when a vet visit collides
+with a walk is a human judgment call (rescheduling the vet is not something the
+app should silently do), so surfacing a clear warning is more useful and less
+error-prone than guessing. The cost is that the schedule can still contain
+overlaps the program knowingly allows — but that is an acceptable,
+human-in-the-loop tradeoff at this scale.
+
+A related tradeoff: the check is O(n²) all-pairs. A sorted sweep-line would be
+O(n log n), but for the handful of tasks in a real day the simpler, more
+readable all-pairs version is worth more than the speed I'd gain.
+
 ---
 
 ## 3. AI Collaboration
