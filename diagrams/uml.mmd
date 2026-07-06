@@ -2,9 +2,11 @@ classDiagram
     class Owner {
         +str name
         +list~Pet~ pets
+        +list~tuple~ availability
     }
 
     class Pet {
+        +int id
         +str name
         +str breed
         +int age
@@ -15,9 +17,11 @@ classDiagram
         +str category
         +Pet pet
         +int priority
+        +int duration
     }
 
     class Scheduler {
+        +Owner owner
         +list~Task~ tasks
         +add_pet(pet Pet) void
         +remove_pet(pet Pet) void
@@ -27,5 +31,6 @@ classDiagram
     }
 
     Owner "1" --> "*" Pet : owns
+    Scheduler "1" --> "1" Owner : belongs to
     Task "*" --> "1" Pet : scheduled for
     Scheduler "1" --> "*" Task : manages
