@@ -11,26 +11,27 @@ classDiagram
         +str breed
         +int age
         +list~str~ medications
+        +list~Task~ tasks
+        +add_task(task Task) void
+        +remove_task(task Task) void
     }
 
     class Task {
         +str category
-        +Pet pet
         +int priority
         +int duration
+        +Pet pet
+        +bool done
+        +mark_complete() void
     }
 
     class Scheduler {
         +Owner owner
-        +list~Task~ tasks
         +add_pet(pet Pet) void
         +remove_pet(pet Pet) void
-        +add_task(task Task) void
-        +remove_task(task Task) void
-        +get_daily_tasks() list~Task~
+        +get_daily_tasks() list~tuple~
     }
 
     Owner "1" --> "*" Pet : owns
     Scheduler "1" --> "1" Owner : belongs to
-    Task "*" --> "1" Pet : scheduled for
-    Scheduler "1" --> "*" Task : manages
+    Pet "1" --> "*" Task : has

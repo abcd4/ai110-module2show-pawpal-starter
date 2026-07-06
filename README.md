@@ -54,11 +54,23 @@ Paste a sample of your app's CLI or Streamlit output here so a reader can see wh
 #   ...
 ```
 
+
+Today's Schedule for Sam
+(available: 8:00 AM-8:30 AM, 5:30 PM-8:00 PM)
+--------------------------------------------
+  8:00 AM — Give medication for Rex (5 min) [priority: 10]
+  8:05 AM — Feeding for Rex (10 min) [priority: 9]
+  5:30 PM — Morning walk for Rex (40 min) [priority: 8]
+  6:10 PM — Enrichment play for Bella (30 min) [priority: 6]
+  6:40 PM — Grooming for Bella (45 min) [priority: 2]
+
+
 ## 🧪 Testing PawPal+
 
 ```bash
 # Run the full test suite:
 pytest
+
 
 # Run with coverage:
 pytest --cov
@@ -67,7 +79,15 @@ pytest --cov
 Sample test output:
 
 ```
-# Paste your pytest output here
+============================= test session starts ==============================
+platform darwin -- Python 3.12.4, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/nicoleonye/ai110-module2show-pawpal-starter
+collected 2 items
+
+test_pawpal_system.py::test_mark_complete_changes_status PASSED          [ 50%]
+test_pawpal_system.py::test_adding_task_increases_pet_task_count PASSED  [100%]
+
+============================== 2 passed in 0.01s ===============================
 ```
 
 ## 📐 Smarter Scheduling
