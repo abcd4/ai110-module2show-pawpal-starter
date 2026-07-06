@@ -17,7 +17,7 @@ The classes needed will be an owner class, a pet class, a task class, and a sche
 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
-
+I made several significant changes during implementation. By adding an id field to pet, I ensure that each pet is uniquely identifiable even if they share the same name. Scheduler and Owner are now linked so that add/remove pets is valid (self.owner.pets can be called). I also fixed task logic. By providing a duration in minutes, the scheduler will be able to properly allocate and prioritize according time. To further ensure the prioritizaiton logic is sound, I added a list called availbility to the owner class, which provides time increments throughout the day where the owner is busy. This is because the owner may not have just one big window of time when they are free.
 ---
 
 ## 2. Scheduling Logic and Tradeoffs
