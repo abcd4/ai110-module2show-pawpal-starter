@@ -1,3 +1,5 @@
+from datetime import time as dtime
+
 import streamlit as st
 
 from pawpal_system import Owner, Pet, Scheduler, Task
@@ -85,9 +87,26 @@ else:
     with col3:
         priority = st.selectbox("Priority", ["low", "medium", "high"], index=2)
 
+    col4, col5, col6 = st.columns(3)
+    with col4:
+        # A fixed time is optional: it's what powers sorting and conflict
+        # detection. Untimed tasks still get packed into the daily plan.
+        has_time = st.checkbox("Set a fixed time")
+    with col5:
+        picked = st.time_input("Time", value=dtime(8, 0), disabled=not has_time)
+    with col6:
+        frequency = st.selectbox("Repeats", ["one-time", "daily", "weekly"])
+
     if st.button("Add task"):
         pet.add_task(
-            Task(category=task_title, priority=PRIORITY_MAP[priority], duration=int(duration))
+            Task(
+                category=task_title,
+                priority=PRIORITY_MAP[priority],
+                duration=int(duration),
+                # Store the time as the "HH:MM" string the Scheduler expects.
+                time=picked.strftime("%H:%M") if has_time else None,
+                frequency=None if frequency == "one-time" else frequency,
+            )
         )
 
     if pet.tasks:
@@ -96,15 +115,96 @@ else:
             [
                 {
                     "task": t.category,
+                    "time": t.time or "—",
                     "duration (min)": t.duration,
                     "priority": t.priority,
-                    "done": t.done,
+                    "repeats": t.frequency or "one-time",
+                    "done": "✅" if t.done else "⏳",
                 }
                 for t in pet.tasks
             ]
         )
+
+        # --- Mark a task complete (demonstrates recurrence) -------------------
+        # Completing a daily/weekly task spawns its next occurrence on the pet.
+        pending = [t for t in pet.tasks if not t.done]
+        if pending:
+            labels = [
+                f"{t.category}"
+                + (f" @ {t.time}" if t.time else "")
+                + (f" ({t.frequency})" if t.frequency else "")
+                for t in pending
+            ]
+            done_idx = st.selectbox(
+                "Mark a task complete",
+                range(len(pending)),
+                format_func=lambda i: labels[i],
+                key="complete_select",
+            )
+            if st.button("Complete task"):
+                spawned = pending[done_idx].mark_complete()
+                if spawned is not None:
+                    st.success(
+                        f"Done! Next '{spawned.category}' scheduled for "
+                        f"{spawned.due_date} ({spawned.frequency})."
+                    )
+                else:
+                    st.success("Marked complete.")
     else:
         st.info(f"No tasks for {pet.name} yet. Add one above.")
+
+st.divider()
+
+# --- All tasks across pets: conflicts, sorting, filtering --------------------
+st.subheader("All Tasks")
+
+# Conflict warnings first — a pet owner needs to see clashes before anything
+# else, and st.warning (not st.error) reads as "worth a look," not "broken."
+conflicts = scheduler.detect_conflicts()
+if conflicts:
+    st.warning(f"⚠️ {len(conflicts)} scheduling conflict(s) found:")
+    for msg in conflicts:
+        st.warning(msg)
+else:
+    st.success("✅ No scheduling conflicts.")
+
+# Filter controls: by pet, and by completion status. These map straight onto
+# Scheduler.filter_tasks(pet_name=..., done=...).
+fcol1, fcol2 = st.columns(2)
+with fcol1:
+    pet_choice = st.selectbox(
+        "Filter by pet", ["All pets"] + [p.name for p in owner.pets]
+    )
+with fcol2:
+    status_choice = st.radio(
+        "Status", ["All", "Pending", "Done"], horizontal=True
+    )
+
+pet_name = None if pet_choice == "All pets" else pet_choice
+done = {"All": None, "Pending": False, "Done": True}[status_choice]
+filtered = scheduler.filter_tasks(pet_name=pet_name, done=done)
+
+# Sort the filtered set chronologically. sort_by_time() sorts across every
+# pet, so we intersect it with the filtered set to honor both at once.
+keep = {id(t) for t in filtered}
+sorted_tasks = [t for t in scheduler.sort_by_time() if id(t) in keep]
+
+if sorted_tasks:
+    st.table(
+        [
+            {
+                "time": t.time or "—",
+                "task": t.category,
+                "pet": t.pet.name if t.pet else "—",
+                "duration (min)": t.duration,
+                "priority": t.priority,
+                "done": "✅" if t.done else "⏳",
+            }
+            for t in sorted_tasks
+        ]
+    )
+else:
+    st.info("No tasks match this filter.")
 
 st.divider()
 
